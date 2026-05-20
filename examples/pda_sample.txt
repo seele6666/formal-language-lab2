@@ -1,0 +1,13 @@
+states: q0 q1
+input_symbols: a b
+stack_symbols: B z0
+start_state: q0
+start_stack: z0
+accept: empty_stack
+transitions:
+q0,b,z0 -> q0,B z0
+q0,b,B -> q0,B B
+q0,a,B -> q1,eps
+q1,a,B -> q1,eps
+q1,eps,B -> q1,eps
+q1,eps,z0 -> q1,eps

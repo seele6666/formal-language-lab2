@@ -1,0 +1,5 @@
+S -> a | bA | B | ccD
+A -> abB | epsilon
+B -> aA
+C -> ddC
+D -> ddd
