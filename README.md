@@ -1,29 +1,37 @@
-﻿# 褰㈠紡璇█涓庤嚜鍔ㄦ満瀹為獙锛堜簩锛?
-鏈」鐩疄鐜扳€滀笂涓嬫枃鏃犲叧鏂囨硶涓庝笅鎺ㄨ嚜鍔ㄦ満鈥濆疄楠岋細
+# 形式语言与自动机实验（二）
 
-- CFG 鍖栫畝锛氭秷闄?epsilon 浜х敓寮忋€佸崟浜х敓寮忋€佹棤鐢ㄧ鍙枫€?- PDA 杞?CFG锛氬皢绌烘爤鎺ュ彈 PDA 杞崲涓虹瓑浠?CFG銆?- PDA 杞?CFG 鍚庡彲缁х画璋冪敤 CFG 鍖栫畝娴佺▼銆?
-## 杩愯鐜
+本项目实现“上下文无关文法与下推自动机”实验：
 
-- Python 3.10 鎴栨洿楂樼増鏈€?- 浠呬娇鐢?Python 鏍囧噯搴擄紝娴嬭瘯浣跨敤 `unittest`銆?
-## 甯哥敤鍛戒护
+- CFG 化简：消除 epsilon 产生式、单产生式、无用符号。
+- PDA 转 CFG：将空栈接受 PDA 转换为等价 CFG。
+- PDA 转 CFG 后可继续调用 CFG 化简流程。
 
-```powershell
-py main.py simplify examples/grammar_sample.txt
-py main.py pda2cfg examples/pda_sample.txt
-py main.py pda2cfg examples/pda_sample.txt --simplify
+## 运行环境
+
+- Python 3.9 或更高版本。
+- 仅使用 Python 标准库，测试使用 `unittest`。
+
+## 常用命令（cmd）
+
+```cmd
+py main.py simplify examples\grammar_sample.txt
+py main.py pda2cfg examples\pda_sample.txt
+py main.py pda2cfg examples\pda_sample.txt --simplify
 py -m unittest discover -s tests
 ```
 
-鍏煎鍛戒护锛?
-```powershell
-py main.py simplify-cfg examples/grammar_sample.txt
-py main.py pda-to-cfg examples/pda_sample.txt --simplify
+兼容命令：
+
+```cmd
+py main.py simplify-cfg examples\grammar_sample.txt
+py main.py pda-to-cfg examples\pda_sample.txt --simplify
 py main.py demo
 ```
 
-## 杈撳叆鏍煎紡
+## 输入格式
 
-CFG 绀轰緥锛?
+CFG 示例：
+
 ```text
 S -> a | b A | B | c c D
 A -> a b B | eps
@@ -32,7 +40,8 @@ C -> d d C
 D -> d d d
 ```
 
-PDA 绀轰緥锛?
+PDA 示例：
+
 ```text
 states: q0 q1
 input_symbols: a b
@@ -49,6 +58,14 @@ q1,eps,B -> q1,eps
 q1,eps,z0 -> q1,eps
 ```
 
-## 椤圭洰缁撴瀯
+## 项目结构
 
-- `cfg.py`锛欳FG 鏁版嵁缁撴瀯銆?- `cfg_parser.py`锛欳FG 鏂囨湰瑙ｆ瀽銆?- `cfg_simplifier.py`锛欳FG 鍖栫畝绠楁硶銆?- `pda.py`锛歅DA 鏁版嵁缁撴瀯銆?- `pda_parser.py`锛歅DA 鏂囨湰瑙ｆ瀽銆?- `pda_to_cfg.py`锛歅DA 鍒?CFG 鐨勬瀯閫犵畻娉曘€?- `main.py`锛氬懡浠よ鍏ュ彛銆?- `tests/`锛氬崟鍏冩祴璇曘€?- `examples/`锛氬疄楠屾寚瀹氭牱渚嬭緭鍏ャ€?
+- `cfg.py`：CFG 数据结构。
+- `cfg_parser.py`：CFG 文本解析。
+- `cfg_simplifier.py`：CFG 化简算法。
+- `pda.py`：PDA 数据结构。
+- `pda_parser.py`：PDA 文本解析。
+- `pda_to_cfg.py`：PDA 到 CFG 的构造算法。
+- `main.py`：命令行入口。
+- `tests/`：单元测试。
+- `examples/`：实验指定样例输入。
