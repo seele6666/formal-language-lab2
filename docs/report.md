@@ -2,14 +2,13 @@
 
 ## 1. 小组信息
 
-- 班级：TODO
-- 组号：TODO
-- 组长：TODO
+- 班级：2024211301
+- 组长：张恒基
 - 小组成员：
-  - 姓名：TODO，学号：TODO，分工：CFG 数据结构与化简算法。负责 `cfg.py`、`cfg_parser.py`、`cfg_simplifier.py`，实现 epsilon 产生式消除、单产生式消除、无用符号消除，并整理 CFG 算法说明。
-  - 姓名：TODO，学号：TODO，分工：PDA 数据结构与 PDA 到 CFG 转换。负责 `pda.py`、`pda_parser.py`、`pda_to_cfg.py`，实现 PDA 输入解析、`[p,A,q]` 变量构造和转换算法说明。
-  - 姓名：TODO，学号：TODO，分工：命令行入口与测试验证。负责 `main.py`、`examples/`、`tests/`，整理实验指定样例，编写并运行单元测试，记录运行输出。
-  - 姓名：TODO，学号：TODO，分工：实验报告与演示材料。负责 `README.md`、`docs/report.md`、`docs/executable.md`、`docs/video_script.md`，补充实验环境、输入输出格式、截图和演示视频脚本。
+  - 姓名：张恒基，学号：2024210926，分工：CFG 数据结构与化简算法。负责 `cfg.py`、`cfg_parser.py`、`cfg_simplifier.py`，实现 epsilon 产生式消除、单产生式消除、无用符号消除，并整理 CFG 算法说明。
+  - 姓名：林旭东，学号：2024210915，分工：PDA 数据结构与 PDA 到 CFG 转换。负责 `pda.py`、`pda_parser.py`、`pda_to_cfg.py`，实现 PDA 输入解析、`[p,A,q]` 变量构造和转换算法说明。
+  - 姓名：尹浩铭，学号：2024210910，分工：命令行入口与测试验证。负责 `main.py`、`examples/`、`tests/`，整理实验指定样例，编写并运行单元测试，记录运行输出。
+  - 姓名：赵博宇，学号：2024210908，分工：实验报告与演示材料。负责 `README.md`、`docs/report.md`、`docs/executable.md`、`docs/video_script.md`，补充实验环境、输入输出格式、截图和演示视频脚本。
 
 ## 2. 实验环境
 
