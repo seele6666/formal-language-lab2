@@ -1,10 +1,13 @@
-﻿# 婕旂ず瑙嗛鑴氭湰
+# 演示视频脚本
 
-## 1. 寮€鍦?
-璇存槑鏈」鐩畬鎴愨€滃舰寮忚瑷€涓庤嚜鍔ㄦ満瀹為獙锛堜簩锛夆€濓紝鍖呭惈 CFG 鍖栫畝鍜?PDA 鍒?CFG 杞崲涓や釜鍔熻兘銆?
-## 2. 灞曠ず椤圭洰缁撴瀯
+## 1. 开场
 
-渚濇灞曠ず锛?
+说明本项目完成“形式语言与自动机实验（二）”，包含 CFG 化简和 PDA 到 CFG 转换两个功能。
+
+## 2. 展示项目结构
+
+依次展示：
+
 - `cfg.py`
 - `cfg_parser.py`
 - `cfg_simplifier.py`
@@ -15,40 +18,48 @@
 - `tests/`
 - `examples/`
 
-璇存槑绠楁硶涓庡懡浠よ鍏ュ彛鍒嗙锛屼究浜庢祴璇曞拰闃呰銆?
-## 3. 婕旂ず CFG 鍖栫畝
+说明算法与命令行入口分离，便于测试和阅读。
 
-灞曠ず `examples/grammar_sample.txt`锛岃繍琛岋細
+## 3. 演示 CFG 化简
 
-```powershell
-py main.py simplify examples/grammar_sample.txt
+展示 `examples\grammar_sample.txt`，运行：
+
+```cmd
+py main.py simplify examples\grammar_sample.txt
 ```
 
-璁茶В杈撳嚭涓凡缁忔秷闄?epsilon 浜х敓寮忋€佸崟浜х敓寮忓拰鏃犵敤绗﹀彿銆?
-## 4. 婕旂ず PDA 杞?CFG
+讲解输出中已经消除 epsilon 产生式、单产生式和无用符号。
 
-灞曠ず `examples/pda_sample.txt`锛岃繍琛岋細
+## 4. 演示 PDA 转 CFG
 
-```powershell
-py main.py pda2cfg examples/pda_sample.txt
+展示 `examples\pda_sample.txt`，运行：
+
+```cmd
+py main.py pda2cfg examples\pda_sample.txt
 ```
 
-璇存槑鍘熷 CFG 涓彉閲?`[p,A,q]` 鐨勫惈涔夈€?
-## 5. 婕旂ず PDA 杞?CFG 鍚庡寲绠€
+说明原始 CFG 中变量 `[p,A,q]` 的含义。
 
-杩愯锛?
-```powershell
-py main.py pda2cfg examples/pda_sample.txt --simplify
+## 5. 演示 PDA 转 CFG 后化简
+
+运行：
+
+```cmd
+py main.py pda2cfg examples\pda_sample.txt --simplify
 ```
 
-璇存槑杞崲缁撴灉鍙互缁х画璋冪敤 CFG 鍖栫畝绠楁硶銆?
-## 6. 婕旂ず鑷姩鍖栨祴璇?
-杩愯锛?
-```powershell
+说明转换结果可以继续调用 CFG 化简算法。
+
+## 6. 演示自动化测试
+
+运行：
+
+```cmd
 py -m unittest discover -s tests
 ```
 
-灞曠ず鎵€鏈夋祴璇曢€氳繃銆?
-## 7. 缁撳熬
+展示所有测试通过。
 
-鎬荤粨瀹為獙鍔熻兘瀹屾垚鎯呭喌锛屽苟璇存槑鎶ュ憡涓繚鐣欎簡鎴浘浣嶇疆銆?
+## 7. 结尾
+
+总结实验功能完成情况，并说明报告中保留了截图位置。
