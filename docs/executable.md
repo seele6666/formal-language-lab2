@@ -31,4 +31,10 @@ py -m pip install pyinstaller
 py -m PyInstaller --onefile main.py
 ```
 
-打包后可执行文件位于 `dist\main.exe`。
+打包后可执行文件位于 `dist\formal_lang_lab2.exe`。
+
+验证：
+
+```cmd
+dist\formal_lang_lab2.exe demo
+```
