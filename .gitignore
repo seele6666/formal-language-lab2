@@ -1,2 +1,9 @@
 __pycache__/
 *.pyc
+build/
+dist/
+*.spec
+submission_staging/
+submission_package/
+~$*.docx
+.claude/
