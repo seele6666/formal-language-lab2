@@ -1,121 +1,143 @@
-// 形式语言与自动机实验报告 — 共用排版（参照本组 DataLink / NFA 实验报告风格）
+// 形式语言实验报告 — 排版与 Unveil INTERFACE.typ 一致
 // 在 docs/实验报告.typ 中：#import "typst-preamble.typ": *
 
-#set document(
-  title: [形式语言与自动机实验（二）实验报告],
-  author: ("张恒基", "林旭东", "尹浩铭", "赵博宇"),
-)
-
-#let accent = rgb("#1e3a5f")
-#let accent-light = rgb("#e8eef5")
-#let rule-color = rgb("#cbd5e1")
-#let muted = rgb("#64748b")
-
-#let font-en = "Times New Roman"
-#let font-body = (font-en, "SimSun", "STSong")
-#let font-heading = (font-en, "SimHei", "Microsoft YaHei", "SimSun")
-#let sz-body = 10.5pt
-#let sz-code = 10.5pt
-#let lead-body = 1.28em
-#let space-par = 1.0em
+#let page-footer = context place(
+  bottom + center,
+  dy: -14pt,
+)[
+  #text(size: 10.5pt, fill: rgb(148, 163, 184))[#counter(page).display()]
+]
 
 #set page(
-  paper: "a4",
-  margin: (x: 2.6cm, y: 2.5cm),
-  header: context [
-    #set text(font: font-body, size: 9pt, fill: muted)
-    #grid(
-      columns: (1fr, 1fr),
-      align: (left, right),
-      [形式语言与自动机 · 实验二],
-      [CFG 化简与 PDA 转 CFG 实验报告],
-    )
-    #line(length: 100%, stroke: 0.4pt + rule-color)
-    #v(4pt)
-  ],
-  footer: context [
-    #line(length: 100%, stroke: 0.4pt + rule-color)
-    #v(4pt)
-    #set text(font: font-body, size: 9pt, fill: muted)
-    #align(center)[#counter(page).display("1")]
-  ],
+  margin: (left: 2.5cm, right: 2.5cm, top: 2.2cm, bottom: 2.2cm),
+  numbering: "1",
+  footer: page-footer,
 )
 
-#set text(font: font-body, size: sz-body, weight: "regular", lang: "zh", region: "cn")
-#show strong: it => it
-#show emph: it => it
-#set par(justify: true, first-line-indent: 2em, leading: lead-body, spacing: space-par)
-#set list(spacing: space-par, body-indent: 0.5em)
-#set enum(spacing: space-par, body-indent: 0.5em)
+#let main-font = ("SimSun", "SimHei", "Microsoft YaHei")
+#set text(font: main-font, size: 12pt)
+#set par(leading: 0.85em, first-line-indent: 0pt, spacing: 0.65em)
+#set heading(numbering: "1.")
 
-#let cn-section = ("一", "二", "三", "四", "五", "六", "七", "八")
-#set heading(numbering: (..nums) => {
-  let n = nums.pos()
-  if n.len() == 1 [#cn-section.at(n.first() - 1)、] else if n.len() == 2 [#n.at(0).#n.at(1)] else [#n.at(0).#n.at(1).#n.at(2)]
-})
-#set figure(gap: 0.6em, placement: none)
-#show figure: set block(breakable: true)
+#let h1-size = 20pt
+#let h2-size = 15pt
+#let h3-size = 13pt
+#let code-size = 10.5pt
+#let seq-size = 11pt
+#let payload-size = 9pt
+#let caption-size = 11pt
+#let hint-size = 11pt
+
+#show heading: set text(font: main-font)
 
 #show heading.where(level: 1): it => {
-  set text(font: font-heading, weight: "regular")
-  v(1.4em, weak: true)
-  text(size: 15pt, fill: accent)[#it]
-  v(0.85em, weak: true)
+  block(breakable: false, above: 2em, below: 1em)[
+    #block(
+      width: 100%,
+      inset: (left: 10pt, top: 10pt, bottom: 10pt),
+      fill: rgb("#eff6ff"),
+      radius: 4pt,
+      stroke: (left: 4pt + rgb("#1e40af")),
+    )[
+      #text(size: h1-size, weight: "bold", fill: rgb("#1e3a8a"))[#it]
+    ]
+  ]
 }
 #show heading.where(level: 2): it => {
-  set text(font: font-heading, weight: "regular")
-  v(1em, weak: true)
-  text(size: 12.5pt, fill: accent)[#it]
-  v(0.65em, weak: true)
-}
-#show outline.entry: it => {
-  set par(leading: 1.05em, spacing: 0.16em, first-line-indent: 0em)
-  set text(font: font-body, size: 9.5pt, weight: "regular", fill: black)
-  it
-}
-#show outline.entry.where(level: 1): it => {
-  set text(size: 10pt)
-  set par(spacing: 0.28em)
-  it
-}
-#show figure.caption: set text(font: font-body, size: sz-body, weight: "regular")
-#show table: it => block(width: 100%)[#it]
-#show table: set table(stroke: 0.45pt + rule-color, inset: (x: 10pt, y: 12pt))
-#show table.cell: it => {
-  set par(first-line-indent: 0em, justify: false, leading: lead-body, spacing: 0.55em)
-  set text(font: font-body, size: sz-body, weight: "regular")
-  set align(left + top)
-  it
-}
-#show table.header: it => {
-  set table(fill: accent-light, stroke: (bottom: 0.8pt + accent))
-  set text(font: font-body, size: sz-body, weight: "regular")
-  set par(leading: lead-body, spacing: 0.45em)
-  set align(left + top)
-  it
-}
-
-#let code-in-cell(s) = block(width: 100%)[
-  #text(font: ("Consolas", "Courier New", font-en), size: sz-code, weight: "regular")[#raw(s, lang: none)]
-]
-#show raw.where(block: true): set block(
-  fill: luma(248),
-  stroke: 0.5pt + rule-color,
-  radius: 3pt,
-  inset: 10pt,
-  width: 100%,
-)
-#show raw: set text(font: ("Consolas", "Courier New", font-en), size: sz-code, weight: "regular")
-
-#let toc-page() = {
-  page(header: none, footer: none, numbering: none, margin: (x: 2.6cm, y: 2.1cm))[
-    #set par(leading: 1.05em, spacing: 0em)
-    #align(center)[
-      #text(font: font-heading, fill: accent, weight: "regular", size: 13pt)[目　录]
-      #v(0.55em, weak: true)
-    ]
-    #outline(indent: 0.95em, depth: 2)
+  block(above: 1.4em, below: 0.7em)[
+    #text(size: h2-size, weight: "bold", fill: rgb("#1e40af"))[#it]
+    #v(0.15em)
+    #line(length: 100%, stroke: 0.5pt + rgb("#bfdbfe"))
   ]
+}
+#show heading.where(level: 3): it => {
+  block(above: 1.1em, below: 0.55em)[
+    #text(size: h3-size, weight: "bold", fill: rgb("#334155"))[#it]
+  ]
+}
+
+#show figure.caption: set text(size: caption-size)
+#set table(inset: (x: 10pt, y: 8pt))
+
+#let mono-font = ("Consolas", "Courier New", "DejaVu Sans Mono")
+#show raw.where(block: false): set text(font: mono-font, size: code-size)
+
+#let inline-code(s) = text(font: mono-font, size: code-size)[#raw(s, lang: none)]
+
+#let as_payload_str(content) = {
+  if type(content) == str { content } else { content.text }
+}
+
+#let seq-diagram(content, caption, roles: none) = figure(
+  block(
+    width: 100%,
+    fill: rgb("#f8fafc"),
+    inset: 14pt,
+    radius: 4pt,
+    stroke: 0.5pt + rgb("#e2e8f0"),
+    breakable: true,
+  )[
+    #if roles != none [
+      #align(center)[
+        #text(size: hint-size, fill: rgb("#334155"))[#roles]
+      ]
+      #v(8pt)
+    ]
+    #set text(font: mono-font, size: seq-size)
+    #set par(leading: 0.75em, spacing: 0pt)
+    #raw(block: true, lang: "text", as_payload_str(content).trim())
+  ],
+  caption: caption,
+)
+
+#let payload-block(content, title: none) = block(
+  width: 100%,
+  fill: rgb("#f8fafc"),
+  inset: 12pt,
+  radius: 4pt,
+  stroke: 0.5pt + rgb("#e2e8f0"),
+  breakable: true,
+)[
+  #if title != none [
+    #text(weight: "bold", size: hint-size)[#title]
+    #v(6pt)
+  ]
+  #set text(font: mono-font, size: payload-size)
+  #set par(leading: 0.62em, spacing: 0pt)
+  #for line in as_payload_str(content).trim().split("\n") {
+    let row = line.trim()
+    if row.len() > 0 [
+      #raw(row)
+      #linebreak()
+    ]
+  }
+]
+
+#show raw.where(block: true): it => block(
+  width: 100%,
+  breakable: true,
+  fill: rgb("#f8fafc"),
+  inset: 10pt,
+  radius: 3pt,
+  stroke: 0.5pt + rgb("#e2e8f0"),
+)[
+  #set text(font: mono-font, size: code-size)
+  #set par(leading: 0.65em)
+  #it
+]
+
+#let hdr-table(body) = {
+  show table: set table(
+    stroke: (x, y) => if y < 1 { (bottom: 0.5pt + black) },
+  )
+  body
+}
+
+#let body-start() = {
   pagebreak()
+  set page(numbering: none, footer: none)
+  outline(title: "目录", indent: 2em)
+  pagebreak()
+  set page(numbering: "1", footer: page-footer)
   counter(page).update(1)
 }
