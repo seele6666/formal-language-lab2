@@ -1,395 +1,512 @@
 // 形式语言与自动机实验（二）· CFG 化简与 PDA 转 CFG
-// 排版参照本组 NFA-to-DFA / DataLink 实验报告 Typst 模板
-// 编译：typst compile docs/实验报告.typ docs/实验报告.pdf
+// 排版与 C:\projects\Unveil\docs\INTERFACE.typ 一致
+// 编译: typst compile docs/实验报告.typ docs/实验报告.pdf
 
 #import "typst-preamble.typ": *
 
-#toc-page()
+#set document(
+  title: "形式语言与自动机实验（二）实验报告",
+  author: ("张恒基", "林旭东", "尹浩铭", "赵博宇"),
+  date: datetime(year: 2026, month: 5, day: 22),
+)
 
-= 小组信息
+// ============================================================
+// 封面
+// ============================================================
 
-#figure(
-  table(
-    columns: (0.85fr, 1.1fr, 1.35fr, 2.7fr),
+#page(margin: (top: 2.2cm, bottom: 2.2cm, x: 2.8cm), numbering: none, footer: none)[
+  #set text(font: main-font)
+  #align(center + horizon)[
+    #block(
+      width: 15cm,
+      inset: (y: 1.1cm),
+      stroke: (top: 2.5pt + rgb("#1a365d"), bottom: 0.75pt + rgb("#cbd5e1")),
+    )[
+      #align(center)[
+        #text(size: 10.5pt, tracking: 0.35em, fill: rgb("#475569"))[形 式 语 言 与 自 动 机 · 实 验 二]
+        #v(0.55cm)
+        #text(size: 26pt, weight: "bold", fill: rgb("#0f172a"))[上下文无关文法与下推自动机]
+        #v(0.65cm)
+        #text(size: 19pt, weight: "medium", fill: rgb("#1e40af"))[CFG 化简与 PDA→CFG 转换实验报告]
+        #v(0.35cm)
+        #text(size: 13pt, fill: rgb("#64748b"))[Formal Languages Lab 2 · CFG Simplification & PDA to CFG]
+      ]
+    ]
+
+    #v(1.5cm)
+
+    #box(
+      width: 13cm,
+      inset: (x: 1.2cm, y: 0.95cm),
+      fill: rgb("#f8fafc"),
+      radius: 6pt,
+      stroke: 0.75pt + rgb("#e2e8f0"),
+    )[
+      #align(center)[
+        #text(size: 11pt, weight: "bold", fill: rgb("#334155"))[小组成员]
+        #v(0.55cm)
+        #grid(
+          columns: (1fr, 1fr),
+          column-gutter: 1.6cm,
+          row-gutter: 0.65cm,
+          align: center + horizon,
+          [
+            #text(size: 13pt, weight: "bold")[张恒基（组长）] \
+            #v(0.25cm)
+            #text(size: 12pt, fill: rgb("#64748b"))[
+              2024211301 \
+              2024210926
+            ]
+          ],
+          [
+            #text(size: 13pt, weight: "bold")[林旭东] \
+            #v(0.25cm)
+            #text(size: 12pt, fill: rgb("#64748b"))[
+              2024211301 \
+              2024210915
+            ]
+          ],
+          [
+            #text(size: 13pt, weight: "bold")[尹浩铭] \
+            #v(0.25cm)
+            #text(size: 12pt, fill: rgb("#64748b"))[
+              2024211301 \
+              2024210910
+            ]
+          ],
+          [
+            #text(size: 13pt, weight: "bold")[赵博宇] \
+            #v(0.25cm)
+            #text(size: 12pt, fill: rgb("#64748b"))[
+              2024211301 \
+              2024210908
+            ]
+          ],
+        )
+      ]
+    ]
+
+    #v(1.4cm)
+
+    #align(center)[
+      #text(size: 11pt, fill: rgb("#64748b"))[项目代号：formal-language-lab2]
+      #v(0.25cm)
+      #text(size: 11pt, fill: rgb("#64748b"))[2026 年 5 月 22 日]
+    ]
+  ]
+
+  #v(1fr)
+  #align(center)[
+    #text(size: caption-size, fill: rgb(148, 163, 184))[
+      本文档为实验二程序设计、算法说明与运行验证的完整记录
+    ]
+  ]
+]
+
+#body-start()
+
+// ============================================================
+// 第一章：小组信息与实验环境
+// ============================================================
+
+= 小组信息与实验环境
+
+== 成员分工
+
+#hdr-table[
+  #table(
+    columns: (auto, auto, auto, 1fr),
     align: (left, left, left, left),
-    table.header([姓名], [学号], [角色], [分工与负责模块]),
+    table.header([*姓名*], [*学号*], [*角色*], [*分工与负责模块*]),
     [张恒基], [2024210926], [组长], [
-      CFG 数据结构与化简算法；#code-in-cell("cfg.py")、#code-in-cell("cfg_parser.py")、#code-in-cell("cfg_simplifier.py")，实现 epsilon 产生式消除、单产生式消除、无用符号消除，并整理 CFG 算法说明。
+      CFG 数据结构与化简算法；#inline-code("cfg.py")、#inline-code("cfg_parser.py")、#inline-code("cfg_simplifier.py")；epsilon / 单产生式 / 无用符号消除及算法文档。
     ],
     [林旭东], [2024210915], [PDA / 转换], [
-      PDA 数据结构与 PDA→CFG 转换；#code-in-cell("pda.py")、#code-in-cell("pda_parser.py")、#code-in-cell("pda_to_cfg.py")，实现 PDA 输入解析、#raw("[p,A,q]", lang: none) 变量构造和转换算法说明。
+      PDA 数据结构与 PDA→CFG；#inline-code("pda.py")、#inline-code("pda_parser.py")、#inline-code("pda_to_cfg.py")；#inline-code("[p,A,q]") 变量构造。
     ],
     [尹浩铭], [2024210910], [入口 / 测试], [
-      命令行入口与测试验证；#code-in-cell("main.py")、#code-in-cell("examples/")、#code-in-cell("tests/")，整理实验指定样例，编写并运行单元测试，记录运行输出。
+      命令行与样例测试；#inline-code("main.py")、#inline-code("examples/")、#inline-code("tests/")；12 项单元测试与运行记录。
     ],
     [赵博宇], [2024210908], [文档 / 演示], [
-      实验报告与演示材料；#code-in-cell("README.md")、#code-in-cell("docs/report.md")、#code-in-cell("docs/executable.md")、#code-in-cell("docs/video_script.md")，补充实验环境、输入输出格式、截图和演示视频脚本。
+      实验报告、可执行说明与演示脚本；#inline-code("README.md")、#inline-code("docs/")、PyInstaller 打包与视频脚本。
     ],
-  ),
-  caption: [小组成员与分工（班级 2024211301，组长张恒基）],
+  )
+]
+
+== 实验环境
+
+#hdr-table[
+  #table(
+    columns: (auto, auto),
+    stroke: none,
+    align: (left, left),
+    [*项目*], [*配置*],
+    [操作系统], [Windows 11（x86-64）],
+    [编程语言], [Python 3.12（兼容 3.9+）],
+    [依赖], [仅标准库：#inline-code("dataclasses")、#inline-code("itertools")、#inline-code("argparse")、#inline-code("re")、#inline-code("unittest")],
+    [运行入口], [#inline-code("main.py")；可选 #inline-code("dist/formal_lang_lab2.exe")],
+    [打包], [PyInstaller #inline-code("--onefile --name formal_lang_lab2")],
+  )
+]
+
+== 项目结构
+
+#payload-block(
+  ```
+  formal-language-lab2/
+  ├── main.py                 # 命令行入口（simplify / pda2cfg / demo）
+  ├── cfg.py                  # CFG 数据结构
+  ├── cfg_parser.py           # CFG 文本解析
+  ├── cfg_simplifier.py       # CFG 化简（四步流水线）
+  ├── pda.py                  # PDA 五元组
+  ├── pda_parser.py           # PDA 文本解析（块格式 + 数学符号格式）
+  ├── pda_to_cfg.py           # PDA→CFG 标准构造
+  ├── examples/
+  │   ├── grammar_sample.txt  # 指定 CFG 样例
+  │   ├── specified_cfg.txt
+  │   ├── pda_sample.txt      # 指定 PDA 样例
+  │   └── specified_pda.txt
+  ├── tests/                  # 12 项 unittest
+  └── docs/                   # 本报告、截图、可执行说明
+  ```,
+  title: [仓库目录（提交源码根目录）],
 )
 
-= 实验环境
-
-#figure(
-  table(
-    columns: (1.1fr, 2.4fr),
-    align: (right, left),
-    table.header([项目], [配置]),
-    [操作系统], [Windows 11],
-    [编程语言], [Python 3.12],
-    [依赖情况], [程序仅使用 Python 标准库（#code-in-cell("dataclasses")、#code-in-cell("itertools")、#code-in-cell("argparse")、#code-in-cell("re")、#code-in-cell("unittest") 等），无需安装第三方包；测试使用 #code-in-cell("unittest")],
-    [运行入口], [#code-in-cell("main.py")；可执行包 #code-in-cell("dist/formal_lang_lab2.exe")],
-    [打包工具], [PyInstaller（#code-in-cell("--onefile")）],
-  ),
-  caption: [实验软硬件与运行环境],
-)
-
-项目结构：
-
-#show raw.where(block: true): set block(inset: 8pt)
-```text
-formal-language-lab2/
-├── main.py                 # 命令行入口
-├── cfg.py                  # CFG 数据结构
-├── cfg_parser.py           # CFG 文本解析器
-├── cfg_simplifier.py       # CFG 化简算法
-├── pda.py                  # PDA 数据结构
-├── pda_parser.py           # PDA 文本解析器
-├── pda_to_cfg.py           # PDA 到 CFG 转换算法
-├── examples/
-│   ├── grammar_sample.txt  # 指定 CFG 样例（块格式）
-│   ├── specified_cfg.txt   # 指定 CFG 样例（符号格式）
-│   ├── pda_sample.txt      # 指定 PDA 样例（块格式）
-│   └── specified_pda.txt   # 指定 PDA 样例（数学符号格式）
-├── tests/
-│   ├── test_cfg_parser.py
-│   ├── test_cfg_simplifier.py
-│   ├── test_pda_parser.py
-│   ├── test_pda_to_cfg.py
-│   └── test_main.py
-└── docs/
-    ├── report.md           # 本实验报告（Markdown 版）
-    ├── requirements.md     # 实验要求
-    ├── executable.md       # 可执行程序说明
-    └── video_script.md     # 演示视频脚本
-```
-
-= 程序设计思路
+= 程序设计
 
 == 整体架构
 
-项目采用模块化分层设计，按功能拆分为三层：#strong[数据结构层]（#code-in-cell("cfg.py")、#code-in-cell("pda.py")）、#strong[解析层]（#code-in-cell("cfg_parser.py")、#code-in-cell("pda_parser.py")）、#strong[算法层]（#code-in-cell("cfg_simplifier.py")、#code-in-cell("pda_to_cfg.py")），最外层由 #code-in-cell("main.py") 统一调度。
+项目采用*模块化分层*：数据结构层（#inline-code("cfg.py")、#inline-code("pda.py")）→ 解析层（#inline-code("cfg_parser.py")、#inline-code("pda_parser.py")）→ 算法层（#inline-code("cfg_simplifier.py")、#inline-code("pda_to_cfg.py")），由 #inline-code("main.py") 统一调度。
 
-这种分层的优势在于：
-- #strong[算法与数据解耦]：化简算法只操作 #code-in-cell("CFG") 对象，不关心输入文本格式；转换算法只操作 #code-in-cell("PDA") 对象，不关心输出格式。
-- #strong[可组合性]：PDA 转 CFG 后得到的 #code-in-cell("CFG") 对象可直接传入化简流水线，实现实验要求的"先转换再化简"的串联流程。
-- #strong[可测试性]：每个模块可独立编写单元测试，不依赖命令行或文件 I/O。
+#enum[
+  *算法与数据解耦*：化简只操作 #inline-code("CFG") 对象；PDA 转换只操作 #inline-code("PDA") 对象，与文本格式无关。
+  *可组合*：#inline-code("pda2cfg") 输出 #inline-code("CFG") 后可接 #inline-code("simplify_cfg")，满足「先转换再化简」。
+  *可测试*：各模块独立单测，不依赖命令行或磁盘 I/O（除解析入口）。
+]
 
-#figure(
-  table(
-    columns: (1.35fr, 2.65fr),
-    align: (left, left),
-    table.header([源文件], [职责]),
-    [#code-in-cell("cfg.py")], [CFG 产生式与变量数据结构],
-    [#code-in-cell("cfg_parser.py")], [CFG 文本解析（含 #code-in-cell("eps") 多别名词）],
-    [#code-in-cell("cfg_simplifier.py")], [三步化简算法（epsilon 消除、单产生式消除、无用符号消除）],
-    [#code-in-cell("pda.py")], [PDA 五元组与迁移结构],
-    [#code-in-cell("pda_parser.py")], [PDA 文本解析（支持数学符号格式与块格式）],
-    [#code-in-cell("pda_to_cfg.py")], [PDA→CFG 构造（标准 #raw("[p,A,q]", lang: none) 变量法）],
-    [#code-in-cell("main.py")], [子命令 #code-in-cell("simplify") / #code-in-cell("pda2cfg") / #code-in-cell("demo")],
-  ),
-  caption: [模块划分],
-)
+#hdr-table[
+  #figure(
+    table(
+      columns: (auto, 1fr),
+      align: (left, left),
+      table.header([*源文件*], [*职责*]),
+      [#inline-code("cfg.py")], [产生式集合、变量/终结符集合、文本输出],
+      [#inline-code("cfg_parser.py")], [多箭头写法、#inline-code("eps") 别名、注释过滤],
+      [#inline-code("cfg_simplifier.py")], [nullable / unit-closure / 生成 / 可达四步化简],
+      [#inline-code("pda.py")], [状态、栈符号、迁移表、空栈接受标志],
+      [#inline-code("pda_parser.py")], [块格式与 #inline-code("delta(q,a,A)=") 数学格式],
+      [#inline-code("pda_to_cfg.py")], [[p,A,q] 变量法、压栈长度枚举],
+      [#inline-code("main.py")], [子命令 #inline-code("simplify")、#inline-code("pda2cfg")、#inline-code("demo")],
+    ),
+    caption: [模块划分与源文件对应关系],
+  )
+]
+
+== 命令行接口
+
+#hdr-table[
+  #table(
+    columns: (auto, auto, 1fr),
+    align: (left, left, left),
+    table.header([*子命令*], [*别名*], [*功能*]),
+    [#inline-code("simplify")], [#inline-code("simplify-cfg")], [读入 CFG 文件，输出化简后产生式],
+    [#inline-code("pda2cfg")], [#inline-code("pda-to-cfg")], [读入 PDA，输出转换 CFG；#inline-code("--simplify") 继续化简],
+    [#inline-code("demo")], [—], [内置 #inline-code("SPECIFIED_CFG") 与 #inline-code("SPECIFIED_PDA") 一次演示],
+  )
+]
+
+#v(0.2cm)
+#text(size: hint-size, fill: gray)[处理流水线：读文件 → 解析 → 算法 → 标准产生式文本输出。]
 
 == CFG 化简流水线
 
-CFG 化简流程按固定顺序依次执行四个步骤：
+#seq-diagram(
+  "
+      输入 CFG 文本
+            |
+            v
+      cfg_parser.parse_cfg()
+            |
+            v
+   (1) eliminate_epsilon_productions
+            |
+            v
+   (2) eliminate_unit_productions
+            |
+            v
+   (3) remove_non_generating_symbols
+            |
+            v
+   (4) remove_unreachable_symbols
+            |
+            v
+      CFG.to_text()  -->  终端输出
+  ",
+  [CFG 化简四步流水线（顺序不可调换）],
+)
 
-```text
-输入 CFG
-  → (1) 消除 epsilon 产生式 (eliminate_epsilon_productions)
-  → (2) 消除单产生式 (eliminate_unit_productions)
-  → (3) 消除非生成符号 (remove_non_generating_symbols)
-  → (4) 消除不可达符号 (remove_unreachable_symbols)
-  → 输出等价的无 epsilon、无单产生式、无无用符号的 CFG
-```
+*顺序不可调换*：消 epsilon 可能引入新单产生式；消单产生式可能产生新的非生成符号；先删非生成再删不可达，才能保留「可生成终结符串且从开始符号可达」的符号。
 
-#strong[顺序不可调换的原因]：消除 epsilon 产生式可能引入新的单产生式，因此必须先消 epsilon 再消单产生式；消除单产生式可能使某些变量变为非生成，因此消单产生式必须在消除非生成符号之前；消除非生成符号可能切断某些变量的可达路径，因此先消非生成再消不可达，确保只保留"既能生成终结符串、又能被开始符号到达"的有用符号。
+== PDA 到 CFG 组合流水线
 
-== PDA 到 CFG 转换思路
-
-采用教材标准构造：对于空栈接受的 PDA，引入形如 #raw("[p,A,q]", lang: none) 的变量，其语义为"从状态 $p$ 出发，栈顶为 $A$，经过若干步后弹出 $A$ 并到达状态 $q$，期间读入的输入串"。
-
-开始符号 $S$ 的产生式为 $S arrow.r [q_0, z_0, q]$（对所有状态 $q$），表示从初始状态 $q_0$ 出发，初始栈符号 $z_0$ 在栈顶，最终弹出 $z_0$ 到达某个状态 $q$，此时栈为空，PDA 接受。
-
-迁移的处理分两种情况：
-- #strong[弹出（压入为空）]：$delta(p, a, A) = {(q, epsilon)}$，则添加产生式 #raw("[p,A,q] → a", lang: none)。
-- #strong[压入 $k$ 个符号]：$delta(p, a, A) = {(q, B_1 B_2 dots B_k)}$，则对任意可能的状态序列 $r_1, r_2, dots, r_(k-1), q_k$，枚举中间状态，添加产生式 #raw("[p,A,qk] → a [q,B1,r1] [r1,B2,r2] ... [rk-1,Bk,qk]", lang: none)。
+#seq-diagram(
+  "
+      输入 PDA 文本
+            |
+            v
+      pda_parser.parse_pda()
+            |
+            v
+      pda_to_cfg(pda)  -->  原始 CFG（含 [p,A,q] 变量）
+            |
+            +---- 默认：直接打印
+            |
+            +---- --simplify：simplify_cfg() -->  化简 CFG
+            |
+            v
+      终端输出产生式列表
+  ",
+  [PDA→CFG 与可选化简组合流程],
+)
 
 = 核心算法
 
 == epsilon 产生式消除
 
-#strong[问题描述]：形如 $A arrow.r epsilon$ 的产生式称为 epsilon 产生式。消除 epsilon 产生式的目标是得到一个不含 $epsilon$ 产生式的等价文法（若原语言不含空串 $epsilon$）。
+*问题*：$A arrow.r epsilon$ 使语言可能含空串；目标是在语言不含空串时得到*无 epsilon 产生式*的等价文法。
 
-#strong[算法步骤]：
+*步骤*：
 
-+ #strong[步骤一：计算 nullable 变量集合]（不动点迭代）
-  - 初始化 #raw("nullable = ∅", lang: none)。
-  - 重复扫描所有产生式：若存在产生式 $A arrow.r alpha$，且 $alpha$ 中所有符号都在 #raw("nullable", lang: none) 中（空串 $alpha$ 视为自动满足），则将 $A$ 加入 #raw("nullable", lang: none)。
-  - 直到 #raw("nullable", lang: none) 不再增长。
+#enum[
+  *计算 nullable*（不动点）：若 $A arrow.r alpha$ 且 $alpha$ 中符号均在 nullable，则 $A in$ nullable。
+  *扩展右部*：对每个产生式，枚举 nullable 位置的所有删除组合，加入新产生式。
+  *删除*：原 epsilon 产生式不再保留（空右部不加入，除非可选保留 $S arrow.r epsilon$）。
+]
 
-+ #strong[步骤二：扩展产生式右部]：对每个产生式 $A arrow.r X_1 X_2 dots X_n$
-  - 找出右部中所有 nullable 符号的位置。
-  - 枚举这些位置的所有删除组合（含删除 0 个，即保留原右部）。
-  - 对每种组合，将删除后的右部作为新产生式加入结果文法。
-  - 若删除后右部为空（即全部符号被删），不加入（除非是保留开始符号 $epsilon$ 的可选模式）。
+*复杂度*：nullable 迭代 $O(|V| dot |P|)$；右部 $k$ 个 nullable 时组合 $2^k$。
 
-+ #strong[步骤三：删除原 epsilon 产生式]：上述步骤中跳过空右部，自然实现了删除。
-
-#strong[复杂度分析]：nullable 计算最多迭代 $|V|$ 次，每次扫描 $|P|$ 个产生式，复杂度 $O(|V| dot |P|)$。扩展右部时，若右部有 $k$ 个 nullable 符号，则枚举 $2^k$ 种组合。最坏情况下 nullable 符号数量可达到 $|V|$，但实际文法中通常很小。
-
-#strong[代码实现要点]（#code-in-cell("cfg_simplifier.py:19-39")）：使用 #code-in-cell("itertools.combinations") 枚举所有删除组合，#code-in-cell("find_nullable_variables()") 返回 nullable 变量集合。
+*实现*：#inline-code("cfg_simplifier.py") 中 #inline-code("find_nullable_variables()")、#inline-code("itertools.combinations")。
 
 == 单产生式消除
 
-#strong[问题描述]：形如 $A arrow.r B$（$A, B$ 均为变量）的产生式称为单产生式。单产生式本身不产生终结符，但可能形成链 $A => B => C => dots$，增加推导步数且使文法膨胀。
+*问题*：$A arrow.r B$ 不直接产生终结符，形成 $A =>^* B$ 链，使文法冗余。
 
-#strong[算法步骤]：
+*步骤*：
 
-+ #strong[步骤一：计算 unit-closure]：对每个变量 $A$，通过 BFS 计算其通过单产生式可达的所有变量集合 #raw("unit_closure[A]", lang: none)。
-  - 初始化 #raw("unit_closure[A] = {A}", lang: none)。
-  - 重复：若 $B in$ #raw("unit_closure[A]", lang: none) 且存在单产生式 $B arrow.r C$，则将 $C$ 加入。
-  - 直到不再增长。
+#enum[
+  对每个 $A$ 计算 #inline-code("unit_closure[A]")（经单产生式可达的变量集，BFS/DFS）。
+  将闭包中每个 $B$ 的*非单产生式*并入 $A$。
+  删除全部单产生式。
+]
 
-+ #strong[步骤二：替换产生式]：对每个变量 $A$，遍历 #raw("unit_closure[A]", lang: none) 中的每个变量 $B$：
-  - 将 $B$ 的所有非单产生式右部（长度 $!= 1$ 或该符号不是变量）加入 $A$ 的产生式集合。
-  - 不再保留任何单产生式。
+*复杂度*：$O(|V| dot (|V| + |P|))$。
 
-#strong[复杂度分析]：unit-closure 计算对 $|V|$ 个变量各做一次 BFS，每次 BFS 遍历可能包含所有变量，复杂度 $O(|V| dot (|V| + |P|))$。替换阶段复杂度 $O(|V| dot |P|)$。
-
-#strong[代码实现要点]（#code-in-cell("cfg_simplifier.py:58-74")）：#code-in-cell("_unit_reachable_variables()") 使用显式栈的 DFS 实现传递闭包；#code-in-cell("_is_unit_production()") 检查右部长度是否为 1 且该符号是否属于变量集。
+*实现*：#inline-code("_unit_reachable_variables()")、#inline-code("_is_unit_production()")。
 
 == 无用符号消除
 
-无用符号分为两类：#strong[非生成符号]（不能推导出任何终结符串）和 #strong[不可达符号]（从开始符号出发无法到达）。消除必须按"先非生成、后不可达"的顺序进行。
+分两步，*必须先非生成、后不可达*。
 
-=== 第一步：消除非生成符号
+=== 消除非生成符号
 
-#strong[算法步骤]：
+#enum[
+  不动点计算 #inline-code("generating")：产生式右部变量均在 generating 中则左部加入（终结符恒可生成）。
+  删除左部非 generating 的产生式；右部含非生成变量的产生式一并删除。
+]
 
-+ #strong[计算生成变量集合]（不动点迭代）：
-  - 初始化 #raw("generating = ∅", lang: none)。
-  - 重复：对每个产生式 $A arrow.r alpha$，若 $alpha$ 中所有 #strong[变量]都在 #raw("generating", lang: none) 中（终结符自动视为可生成），则将 $A$ 加入 #raw("generating", lang: none)。
-  - 直到不再增长。
+=== 消除不可达符号
 
-+ #strong[过滤产生式]：删除左部不在 #raw("generating", lang: none) 中的产生式；对于保留的产生式，若其右部包含非生成变量，则该产生式也被删除（因为非生成变量永远无法推导出终结符串）。
+#enum[
+  从 $\{S\}$ 出发 BFS 得 #inline-code("reachable")。
+  仅保留左部在 reachable 的产生式；右部含不可达变量的产生式删除。
+]
 
-=== 第二步：消除不可达符号
+*实现*：#inline-code("find_generating_variables()")、#inline-code("find_reachable_variables()")（#inline-code("cfg_simplifier.py:77-138")）。
 
-#strong[算法步骤]：
+== PDA 到 CFG 等价构造
 
-+ #strong[计算可达变量集合]（BFS）：
-  - 初始化 #raw("reachable = {S}", lang: none)。
-  - 重复：对每个可达变量 $A$，检查其所有产生式右部，将其中出现的变量加入 #raw("reachable", lang: none)。
-  - 直到不再增长。
+*前置*：仅支持*空栈接受*（#inline-code("accepts_by_empty_stack = True")）。
 
-+ #strong[过滤产生式]：只保留左部在 #raw("reachable", lang: none) 中的产生式；对于保留的产生式，若右部包含不可达变量，同样删除。
+#hdr-table[
+  #table(
+    columns: (auto, 1fr),
+    align: (left, left),
+    table.header([*步骤*], [*说明*]),
+    [1. 变量], [对每个 $(p,A,q)$ 引入 #inline-code("[p,A,q]")：从 $p$ 出发栈顶 $A$，读串后弹出 $A$ 到 $q$；共 $|Q|^2|Gamma|$ 个],
+    [2. 开始式], [$S arrow.r [q_0,z_0,q]$，$q$ 取遍所有状态],
+    [3. 迁移], [$delta(p,a,A)=(q,epsilon)$ → #inline-code("[p,A,q] -> a")],
+    [4. 压栈], [$delta(p,a,A)=(q,B_1...B_k)$ 时枚举中间状态，链式产生式],
+    [5. ε 迁移], [输入 $epsilon$ 时右部可为纯变量串],
+  )
+]
 
-#strong[复杂度分析]：两个步骤均为不动点迭代，复杂度各为 $O(|V| dot |P|)$。
+*复杂度*：压栈长度 $k$ 时单条迁移最多 $O(|Q|^k)$ 条产生式；总 worst-case $O(|Q|^(K+1)|Gamma|)$。
 
-#strong[代码实现要点]（#code-in-cell("cfg_simplifier.py:77-138")）：#code-in-cell("find_generating_variables()") 和 #code-in-cell("find_reachable_variables()") 分别实现上述迭代过程。注意在判定"右部符号是否满足条件"时，终结符总是自动满足。
+*实现*：#inline-code("itertools.product") 枚举中间状态；#inline-code("_add_transition_productions()") 区分 push 长度 0 与 $>= 1$。
 
-== PDA 到 CFG 的等价构造
+= 输入与输出格式
 
-#strong[前置条件]：PDA 必须以空栈方式接受（#code-in-cell("accepts_by_empty_stack = True")）。若 PDA 使用终态接受，需先转换为空栈接受。
+== CFG 输入
 
-#strong[算法步骤]：
+*紧凑风格*：
 
-+ #strong[步骤一：构造变量集合]：对所有状态 $p, q in Q$ 和栈符号 $A in Gamma$，构造变量 #raw("[p,A,q]", lang: none)，其语义为"从状态 $p$ 出发，栈顶为 $A$，读入某个串后弹出 $A$ 并到达状态 $q$"。变量总数 $= |Q|^2 times |Gamma|$。
-
-+ #strong[步骤二：构造开始产生式]：对每个状态 $q in Q$，添加：
-  ```text
-  S → [q0, z0, q]
+#payload-block(
   ```
-  其中 $q_0$ 为初始状态，$z_0$ 为初始栈符号。
+  S -> a | bA | B | ccD
+  A -> abB | epsilon
+  B -> aA
+  C -> ddC
+  D -> ddd
+  ```,
+)
 
-+ #strong[步骤三：构造迁移产生式]：对每个迁移 $delta(p, a, A) = {(q, B_1 B_2 dots B_k)}$：
-  - #strong[若 $k = 0$]（仅弹出）：添加 #raw("[p,A,q] → a", lang: none)。
-  - #strong[若 $k >= 1$]：枚举所有中间状态 $r_1, r_2, dots, r_(k-1) in Q$，添加：
-    ```text
-    [p,A,qk] → a [q,B1,r1] [r1,B2,r2] ... [rk-1,Bk,qk]
-    ```
-    其中 $q_k$ 取遍所有状态。
+*多字符变量*（PDA 转换后）：
 
-+ #strong[步骤四：$epsilon$ 迁移处理]：若输入符号为 $epsilon$（即 $delta(p, epsilon, A)$），则上述步骤中 $a = epsilon$，产生式右部以变量串开头。
+#payload-block(
+  ```
+  S -> b [q0,B,q1]
+  [q0,B,q1] -> a | b [q0,B,q1]
+  ```,
+)
 
-#strong[复杂度分析]：构造的变量数为 $|Q|^2 times |Gamma|$。对于压入 $k$ 个符号的迁移，需枚举 $|Q|^(k-1)$ 个中间状态组合，再乘以 $|Q|$ 种 $q_k$ 选择，共 $|Q|^k$ 种。总产生式数量在最坏情况下为 $O(|Q|^(K+1) times |Gamma|)$，其中 $K$ 为最大压入长度。
+#hdr-table[
+  #table(
+    columns: (auto, 1fr),
+    stroke: none,
+    align: (left, left),
+    [*规则*], [*说明*],
+    [箭头], [#inline-code("->")、#inline-code("=>")、#inline-code("→") 等],
+    [空串], [#inline-code("epsilon")、#inline-code("eps")、#inline-code("ε") 等],
+    [分隔], [#inline-code("|") 分隔候选右部；\# 起为注释],
+    [推断], [开始符号、变量集、终结符集由产生式自动收集],
+  )
+]
 
-#strong[代码实现要点]（#code-in-cell("pda_to_cfg.py:15-95")）：使用 #code-in-cell("itertools.product") 枚举中间状态；#code-in-cell("_add_transition_productions()") 分别处理 push 长度为 0 和 $>= 1$ 的情况；对仅支持空栈接受的 PDA 做了显式校验。
+== PDA 输入
 
-= 输入格式与输出格式
+*块格式（推荐，#inline-code("examples/pda_sample.txt")）*：
 
-== CFG 输入格式
+#payload-block(
+  ```
+  states: q0 q1
+  input_symbols: a b
+  stack_symbols: B z0
+  start_state: q0
+  start_stack: z0
+  accept: empty_stack
+  transitions:
+  q0,b,z0 -> q0,B z0
+  q0,b,B -> q0,B B
+  q0,a,B -> q1,eps
+  q1,a,B -> q1,eps
+  q1,eps,B -> q1,eps
+  q1,eps,z0 -> q1,eps
+  ```,
+)
 
-支持两种写法风格：
-
-#strong[紧凑风格]（单字符符号直接拼接）：
-```text
-S -> a | bA | B | ccD
-A -> abB | epsilon
-B -> aA
-C -> ddC
-D -> ddd
-```
-
-#strong[空格分隔风格]（多字符符号用空格隔开，如 #raw("[q0,B,q1]", lang: none)）：
-```text
-S -> b [q0,B,q1]
-[q0,B,q1] -> a | b [q0,B,q1]
-```
-
-#strong[解析规则]：
-- 产生式箭头支持 #code-in-cell("->")、#code-in-cell("=>")、#code-in-cell("-->")、#code-in-cell(":")、#code-in-cell("=") 及 Unicode 箭头 #code-in-cell("→")。
-- $epsilon$ 的别名：#code-in-cell("epsilon")、#code-in-cell("eps")、#code-in-cell("e")、#code-in-cell("lambda")、#code-in-cell("empty")、Unicode #code-in-cell("ε")。
-- 用 #code-in-cell("|") 分隔多个候选右部。
-- #code-in-cell("#") 至行尾为注释。
-- 起始终结符从产生式自动推导。
-
-== PDA 输入格式
-
-支持两种格式：
-
-#strong[格式一：数学符号格式]
-```text
-M = ({q0,q1}, {a,b}, {B,z0}, delta, q0, z0, empty)
-delta(q0,b,z0) = {(q0,Bz0)}
-delta(q0,b,B) = {(q0,BB)}
-delta(q0,a,B) = {(q1,epsilon)}
-delta(q1,a,B) = {(q1,epsilon)}
-delta(q1,epsilon,B) = {(q1,epsilon)}
-delta(q1,epsilon,z0) = {(q1,epsilon)}
-```
-
-#strong[格式二：块格式（推荐）]
-```text
-states: q0 q1
-input_symbols: a b
-stack_symbols: B z0
-start_state: q0
-start_stack: z0
-accept: empty_stack
-transitions:
-q0,b,z0 -> q0,B z0
-q0,b,B -> q0,B B
-q0,a,B -> q1,eps
-q1,a,B -> q1,eps
-q1,eps,B -> q1,eps
-q1,eps,z0 -> q1,eps
-```
-
-#strong[解析规则]：
-- 自动识别 Unicode $delta$、$epsilon$、$Phi$ 等字符并归一化。
-- 全角字符（$＝$，$（）$等）自动转为半角。
-- #code-in-cell("accept") 字段：#code-in-cell("empty_stack") / #code-in-cell("empty") / #code-in-cell("phi") / #code-in-cell("Φ") 表示空栈接受。
-- 栈符号串（如 #code-in-cell("Bz0")）会根据已知栈符号集合自动分词。
+*数学符号格式*：与 #inline-code("tests/test_pda_to_cfg.py") 中 #inline-code("SPECIFIED_PDA") 字符串一致；解析器归一化 $delta$、$epsilon$、全角括号等。
 
 == 输出格式
 
-输出为标准产生式列表，按变量名排序（开始符号 $S$ 始终排在最前）：
-
-```text
-S -> a | aA | b | bA | ccD
-A -> abB
-B -> a | aA
-D -> ddd
-```
-
-多字符符号自动以空格分隔输出，$epsilon$ 统一显示为 #code-in-cell("epsilon")。
+按变量名排序输出（$S$ 固定最前）；多字符符号以空格分隔；空串统一打印 #inline-code("epsilon")。
 
 = 测试用例与执行效果
 
 == CFG 指定样例
 
-#strong[输入文法]（#code-in-cell("examples/grammar_sample.txt")）：
-```text
-S → a | bA | B | ccD
-A → abB | ε
-B → aA
-C → ddC
-D → ddd
-```
+*输入*（#inline-code("examples/grammar_sample.txt")）：
 
-#strong[分析]：
-- $A$ 有 $epsilon$ 产生式 $A arrow.r epsilon$，因此 $A$ 是 nullable。
-- $B arrow.r a A$ 中的 $A$ 是 nullable，展开后得到 $B arrow.r a A | a$。
-- $S arrow.r b A$ 展开后得到 $S arrow.r b A | b$；$S arrow.r B$ 为单产生式，unit-closure 将 $B$ 的非单产生式（如 $B arrow.r a A$ 及其 epsilon 展开）并入 $S$。
-- $C arrow.r d d C$：$C$ 只产生自己，属于非生成符号，应被删除。
+#payload-block(
+  ```
+  S -> a | b A | B | c c D
+  A -> a b B | eps
+  B -> a A
+  C -> d d C
+  D -> d d d
+  ```,
+  title: [化简前（课程指定 CFG）],
+)
 
-#strong[运行命令]：
-```cmd
-py main.py simplify examples\grammar_sample.txt
-```
+*分析要点*：
 
-#strong[输出]：
-```text
-S -> a | aA | b | bA | ccD
-A -> abB
-B -> a | aA
-D -> ddd
-```
+#enum[
+  $A arrow.r epsilon$ ⇒ $A$ nullable；$B arrow.r a A$ 展开得 $B arrow.r a A | a$。
+  $S arrow.r b A$ 展开得 $S arrow.r b A | b$；$S arrow.r B$ 为单产生式，unit-closure 将 $B$ 的非单产生式并入 $S$。
+  $C arrow.r d d C$ 仅自引用 ⇒ $C$ 非生成，应删除。
+]
 
-#strong[结果分析]：
-- $C$ 被正确删除（非生成变量，$C arrow.r d d C$ 永远无法终止）。
-- $epsilon$ 产生式 $A arrow.r epsilon$ 被消除，取而代之的是在包含 $A$ 的右部中删除 $A$ 的版本（如 $S arrow.r a A | a$，$B arrow.r a A | a$）。
-- 单产生式 $S arrow.r B$ 被消除；$B arrow.r a A$ 不是单产生式，其经 nullable 展开后的右部通过 unit-closure 并入 $S$（如输出中的 $S arrow.r a | a A$ 等）。
-- $D arrow.r d d d$ 保留（$D$ 可生成终结符串且从 $S$ 可达）。
+*命令*：
+
+#payload-block(
+  ```
+  py main.py simplify examples\grammar_sample.txt
+  ```,
+)
+
+*输出*：
+
+#payload-block(
+  ```
+  S -> a | aA | b | bA | ccD
+  A -> abB
+  B -> a | aA
+  D -> ddd
+  ```,
+  title: [化简后（终端实测）],
+)
+
+*结果*：$C$ 删除；epsilon 与 $S arrow.r B$ 消除；$D arrow.r d d d$ 保留。
 
 #figure(
   image("screenshots/6-1-cfg-simplify.png", width: 100%),
-  caption: [CFG 化简运行截图],
+  caption: [CFG 化简命令运行截图],
 )
 
 == PDA 指定样例
 
-#strong[输入 PDA]（#code-in-cell("examples/pda_sample.txt")）：
-```text
-M = ({q0,q1}, {a,b}, {B,z0}, δ, q0, z0, Φ)
+*输入 PDA*：见 #inline-code("examples/pda_sample.txt")；等价于 #inline-code("main.py") 内 #inline-code("SPECIFIED_PDA")。
 
-δ(q0,b,z0) = {(q0,Bz0)}       // 读 b，栈顶 z0，压入 Bz0（即压 B）
-δ(q0,b,B)  = {(q0,BB)}        // 读 b，栈顶 B，压入 BB（即再压一个 B）
-δ(q0,a,B)  = {(q1,ε)}         // 读 a，栈顶 B，弹出
-δ(q1,a,B)  = {(q1,ε)}         // 读 a，栈顶 B，弹出
-δ(q1,ε,B)  = {(q1,ε)}         // 空输入，栈顶 B，弹出
-δ(q1,ε,z0) = {(q1,ε)}         // 空输入，栈顶 z0，弹出（清空栈）
-```
+*识别语言*：
 
-#strong[语言识别]：该 PDA 识别形如「先若干 $b$、再若干 $a$」的串，且 $a$ 的个数不能超过 $b$ 的个数（每读一个 $b$ 在栈上压入一个 $B$，$a$ 与 $epsilon$ 迁移用于弹出 $B$）。用集合写法可写为
-$ L = { b^m a^n | m >= 1, n >= 1, n <= m } $
-（与单元测试 `test_simplified_cfg_matches_specified_pda_examples` 一致；#strong[不是] $b^n a^n$）。在 $q_0$ 每读 $b$ 压栈，首次读 $a$ 转入 $q_1$，最后用 $epsilon$ 清空 $z_0$ 完成空栈接受。
+$ L = \{ b^m a^n \mid m \ge 1,\ n \ge 1,\ n \le m \} $
 
-#strong[运行命令]：
-```cmd
-py main.py pda2cfg examples\pda_sample.txt --simplify
-```
+（先读 $b$ 压栈，再读 $a$/ε 弹栈；*不是* $b^n a^n$。与 #inline-code("test_simplified_cfg_matches_specified_pda_examples") 一致。）
 
-#strong[输出]：
-```text
-S -> b [q0,B,q1]
-[q0,B,q1] -> a | b [q0,B,q1] | b [q0,B,q1] [q1,B,q1]
-[q1,B,q1] -> a
-```
+*命令*：
 
-#strong[结果分析]：
-- 开始符号 $S$ 只推出一个变量 #raw("[q0,B,q1]", lang: none)（从 $q_0$ 出发弹出 $B$ 到 $q_1$ 的变量被保留），说明从 $q_0$ 出发弹出初始栈符号 $z_0$ 后只能到达 $q_1$。
-- #raw("[q0,B,q1] → a", lang: none) 对应 $delta(q_0, a, B) = {(q_1, epsilon)}$：读 $a$ 弹出 $B$。
-- #raw("[q0,B,q1] → b [q0,B,q1]", lang: none) 对应 $delta(q_0, b, B) = {(q_0, B B)}$，中间状态取 $r = q_1$，第二个 $B$ 弹出的终点为 $q_1$。
-- #raw("[q0,B,q1] → b [q0,B,q1] [q1,B,q1]", lang: none) 对应上述迁移中中间状态取 $r = q_0$ 的情况，形成递归产生式。
-- #raw("[q1,B,q1] → a", lang: none) 对应 $delta(q_1, a, B) = {(q_1, epsilon)}$。
-- 化简后产生式由原始的（转换后）数十条降至 4 条，消除了大量冗余变量（如与 $q_0$ 到达 $q_0$ 相关的变量在化简过程中被判定为非生成或不可达而被删除）。
+#payload-block(
+  ```
+  py main.py pda2cfg examples\pda_sample.txt --simplify
+  ```,
+)
 
-#strong[语义验证]：化简后文法可生成 #raw("ba", lang: none)、#raw("bba", lang: none)、#raw("bbaa", lang: none)、#raw("bbbaaa", lang: none) 等（$m >= n >= 1$）；不能生成空串、单独的 $b$ 或 $a$、以及 $a$ 多于 $b$ 的串（如 #raw("baa", lang: none)）。这与上述 $L = { b^m a^n | m,n >= 1, n <= m }$ 一致。
+*输出*：
+
+#payload-block(
+  ```
+  S -> b [q0,B,q1]
+  [q0,B,q1] -> a | b [q0,B,q1] | b [q0,B,q1] [q1,B,q1]
+  [q1,B,q1] -> a
+  ```,
+  title: [转换并化简后（4 条产生式）],
+)
+
+*产生式含义*：
+
+#hdr-table[
+  #table(
+    columns: (auto, 1fr),
+    align: (left, left),
+    table.header([*产生式*], [*对应迁移直觉*]),
+    [#inline-code("S -> b [q0,B,q1]")], [从 $q_0$ 弹 $z_0$ 且读 $b$ 压 $B$ 到 $q_1$ 的路径],
+    [#inline-code("[q0,B,q1] -> a")], [$delta(q_0,a,B)=(q_1,epsilon)$],
+    [#inline-code("[q0,B,q1] -> b [q0,B,q1]")], [$delta(q_0,b,B)=(q_0,BB)$，中间状态 $r=q_1$],
+    [#inline-code("[q0,B,q1] -> b [q0,B,q1] [q1,B,q1]")], [同上，$r=q_0$ 形成递归],
+    [#inline-code("[q1,B,q1] -> a")], [$delta(q_1,a,B)=(q_1,epsilon)$],
+  )
+]
+
+*语义验证*（BFS 枚举短串）：可生成 #inline-code("ba")、#inline-code("bba")、#inline-code("bbaa")、#inline-code("bbbaaa")；不可生成 #inline-code("baa")、空串、单独 #inline-code("b")/#inline-code("a")。
 
 #figure(
   image("screenshots/6-2-pda2cfg-simplify.png", width: 100%),
@@ -398,42 +515,107 @@ S -> b [q0,B,q1]
 
 == 自动化测试
 
-共编写 12 个单元测试，覆盖所有模块：
+#hdr-table[
+  #figure(
+    table(
+      columns: (auto, auto, 1fr),
+      align: (left, center, left),
+      table.header([*测试文件*], [*用例数*], [*覆盖内容*]),
+      [#inline-code("test_cfg_parser.py")], [2], [指定 CFG、多字符符号解析],
+      [#inline-code("test_cfg_simplifier.py")], [3], [nullable、指定 CFG 化简、单产生式环],
+      [#inline-code("test_pda_parser.py")], [2], [块格式 / 数学符号 PDA],
+      [#inline-code("test_pda_to_cfg.py")], [3], [变量构造、压栈长度、化简后语言 BFS 验证],
+      [#inline-code("test_main.py")], [2], [#inline-code("demo") 输出、CLI 别名],
+    ),
+    caption: [单元测试覆盖（合计 12 项）],
+  )
+]
 
-#figure(
-  table(
-    columns: (1.5fr, 0.5fr, 2.5fr),
-    align: (left, center, left),
-    table.header([测试文件], [测试数], [覆盖内容]),
-    [#code-in-cell("test_cfg_parser.py")], [2], [指定 CFG 解析、多字符符号解析],
-    [#code-in-cell("test_cfg_simplifier.py")], [3], [nullable 变量计算、指定 CFG 化简、单产生式环检测],
-    [#code-in-cell("test_pda_parser.py")], [2], [块格式 PDA 解析、数学符号格式 PDA 解析],
-    [#code-in-cell("test_pda_to_cfg.py")], [3], [标准变量构造、各压栈长度处理、化简后文法语义正确性],
-    [#code-in-cell("test_main.py")], [2], [#code-in-cell("demo") 命令输出、CLI 别名兼容性],
-  ),
-  caption: [单元测试覆盖一览],
+#inline-code("test_pda_to_cfg.py") 对化简 CFG 做有界 BFS，逐串校验是否属于上述 $L$，保证「转换 + 化简」端到端正确。
+
+#payload-block(
+  ```
+  py -m unittest discover -s tests
+  Ran 12 tests in 0.08s — OK
+  ```,
+  title: [测试命令与结果],
 )
-
-其中 #code-in-cell("test_pda_to_cfg.py") 的语义测试尤为关键：它从化简后的文法执行 BFS 推导，枚举长度 $<= N$ 的所有生成终结符串，然后逐串验证是否属于 PDA 识别的语言。这确保了"PDA 转换 → CFG 化简"整个流水线的语义正确性。
-
-#strong[运行命令]：
-```cmd
-py -m unittest discover -s tests
-```
-
-#strong[运行结果]：#strong[Ran 12 tests in 0.08s — OK]
-
-全部 12 项测试通过。
 
 #figure(
   image("screenshots/6-3-unittest.png", width: 100%),
-  caption: [单元测试运行截图],
+  caption: [unittest 运行截图],
+)
+
+= 可执行程序与打包
+
+#hdr-table[
+  #table(
+    columns: (auto, 1fr),
+    align: (left, left),
+    table.header([*步骤*], [*命令*]),
+    [安装], [#inline-code("pip install pyinstaller")],
+    [打包], [#inline-code("pyinstaller --onefile --name formal_lang_lab2 main.py")],
+    [产物], [#inline-code("dist/formal_lang_lab2.exe")],
+    [验证], [#inline-code("dist\\formal_lang_lab2.exe demo")],
+  )
+]
+
+#payload-block(
+  ```
+  Specified CFG simplified:
+  S -> a | aA | b | bA | ccD
+  ...
+
+  Specified PDA converted and simplified:
+  S -> b [q0,B,q1]
+  ...
+  ```,
+  title: [#inline-code("demo") 子命令实测输出摘要],
 )
 
 = 改进思路
 
-- #strong[图形化界面]：当前程序为命令行界面，可增加基于 Web（如 Streamlit 或 Gradio）的图形界面，支持逐步展示化简过程（显示每一步前后的 CFG 变化），便于课堂演示和教学。
-- #strong[边界用例覆盖]：增加更多边界用例的测试，如所有符号均为非生成的退化文法、仅含 $epsilon$ 的文法、含复杂环的单产生式链、压栈长度超过 3 的 PDA 迁移等。
-- #strong[保留开始符号 $epsilon$ 的可选模式]：当原文法生成的语言包含空串时，完全消除 $epsilon$ 产生式会使开始符号也不出现 $epsilon$，虽然语言等价但推导树结构可能改变。可提供 #code-in-cell("--keep-start-epsilon") 选项，当开始符号原本 nullable 时保留 $S arrow.r epsilon$。
-- #strong[终态接受 PDA 支持]：当前仅支持空栈接受，可扩展为也支持终态接受，通过自动插入从终态到空栈的 $epsilon$ 迁移实现等价转换。
-- #strong[化简过程可视化输出]：增加 #code-in-cell("--verbose") 选项，输出每一步化简后的中间文法，帮助用户理解每一步消除的效果。
+#hdr-table[
+  #table(
+    columns: (auto, 1fr),
+    stroke: none,
+    align: (left, left),
+    [*方向*], [*说明*],
+    [图形界面], [Web（Streamlit/Gradio）分步展示四步化简中间文法],
+    [边界测试], [全非生成文法、纯 epsilon、长单产生式链、压栈 $k>3$],
+    [#inline-code("--keep-start-epsilon")], [语言含空串时可选保留 $S arrow.r epsilon$],
+    [终态接受 PDA], [自动插入 ε 迁移转为空栈接受],
+    [#inline-code("--verbose")], [打印每步化简后的 CFG],
+  )
+]
+
+// ============================================================
+// 附录
+// ============================================================
+
+= 附录 A：命令快速参考
+
+#hdr-table[
+  #table(
+    columns: (auto, 1fr),
+    align: (left, left),
+    table.header([*命令*], [*说明*]),
+    [#inline-code("py main.py simplify FILE")], [CFG 化简],
+    [#inline-code("py main.py pda2cfg FILE")], [PDA→CFG（原始）],
+    [#inline-code("py main.py pda2cfg FILE --simplify")], [PDA→CFG 再化简],
+    [#inline-code("py main.py demo")], [内置两例演示],
+    [#inline-code("py -m unittest discover -s tests")], [全部单元测试],
+  )
+]
+
+= 附录 B：版本记录
+
+#hdr-table[
+  #table(
+    columns: (1.1cm, 2.4cm, 1fr),
+    align: (center + horizon, center + horizon, left),
+    table.header([*版本*], [*日期*], [*说明*]),
+    [v1.0], [2026-05], [完成 CFG 化简、PDA→CFG、命令行与 12 项测试],
+    [v1.1], [2026-05-22], [填充运行截图；Typst 报告排版对齐 INTERFACE.typ],
+  )
+]
