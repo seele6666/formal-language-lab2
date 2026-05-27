@@ -1,5 +1,5 @@
 // 形式语言与自动机实验（二）· CFG 化简与 PDA 转 CFG
-// 排版与 C:\projects\Unveil\docs\INTERFACE.typ 一致
+// 排版参照 Unveil 项目 docs/INTERFACE.typ
 // 编译: typst compile docs/实验报告.typ docs/实验报告.pdf
 
 #import "typst-preamble.typ": *
@@ -195,7 +195,7 @@
       [#inline-code("cfg_simplifier.py")], [nullable / unit-closure / 生成 / 可达四步化简],
       [#inline-code("pda.py")], [状态、栈符号、迁移表、空栈接受标志],
       [#inline-code("pda_parser.py")], [块格式与 #inline-code("delta(q,a,A)=") 数学格式],
-      [#inline-code("pda_to_cfg.py")], [[p,A,q] 变量法、压栈长度枚举],
+      [#inline-code("pda_to_cfg.py")], [#inline-code("[p,A,q]") 变量法、压栈长度枚举],
       [#inline-code("main.py")], [子命令 #inline-code("simplify")、#inline-code("pda2cfg")、#inline-code("demo")],
     ),
     caption: [模块划分与源文件对应关系],
@@ -498,7 +498,7 @@ $ L = \{ b^m a^n \mid m \ge 1,\ n \ge 1,\ n \le m \} $
     columns: (auto, 1fr),
     align: (left, left),
     table.header([*产生式*], [*对应迁移直觉*]),
-    [#inline-code("S -> b [q0,B,q1]")], [从 $q_0$ 弹 $z_0$ 且读 $b$ 压 $B$ 到 $q_1$ 的路径],
+    [#inline-code("S -> b [q0,B,q1]")], [读 b；#inline-code("[q0,B,q1]") 表示在 $q_0$ 栈顶为 $B$ 时读入符号并弹出 $B$ 到达 $q_1$（与栈顶 $B$ 相关，非 $z_0$）],
     [#inline-code("[q0,B,q1] -> a")], [$delta(q_0,a,B)=(q_1,epsilon)$],
     [#inline-code("[q0,B,q1] -> b [q0,B,q1]")], [$delta(q_0,b,B)=(q_0,BB)$，中间状态 $r=q_1$],
     [#inline-code("[q0,B,q1] -> b [q0,B,q1] [q1,B,q1]")], [同上，$r=q_0$ 形成递归],
