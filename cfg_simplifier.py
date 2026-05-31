@@ -6,14 +6,38 @@ from itertools import combinations
 
 from cfg import CFG, ProductionRhs
 
+StepLabel = str
+SimplificationStep = tuple[StepLabel, CFG]
 
-def simplify_cfg(grammar: CFG) -> CFG:
+
+def simplify_cfg(grammar: CFG, *, keep_start_epsilon: bool = False) -> CFG:
     """Run the complete simplification pipeline required by the experiment."""
 
-    no_epsilon = eliminate_epsilon_productions(grammar)
-    no_units = eliminate_unit_productions(no_epsilon)
-    generating_only = remove_non_generating_symbols(no_units)
-    return remove_unreachable_symbols(generating_only)
+    result, _ = simplify_cfg_verbose(grammar, keep_start_epsilon=keep_start_epsilon)
+    return result
+
+
+def simplify_cfg_verbose(
+    grammar: CFG,
+    *,
+    keep_start_epsilon: bool = False,
+) -> tuple[CFG, list[SimplificationStep]]:
+    """Run the pipeline and return each intermediate grammar."""
+
+    steps: list[SimplificationStep] = [("input", grammar.copy())]
+    current = grammar.copy()
+    current = eliminate_epsilon_productions(
+        current,
+        keep_start_epsilon=keep_start_epsilon,
+    )
+    steps.append(("(1) eliminate epsilon productions", current.copy()))
+    current = eliminate_unit_productions(current)
+    steps.append(("(2) eliminate unit productions", current.copy()))
+    current = remove_non_generating_symbols(current)
+    steps.append(("(3) remove non-generating symbols", current.copy()))
+    current = remove_unreachable_symbols(current)
+    steps.append(("(4) remove unreachable symbols", current.copy()))
+    return current, steps
 
 
 def eliminate_epsilon_productions(grammar: CFG, keep_start_epsilon: bool = False) -> CFG:

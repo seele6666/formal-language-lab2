@@ -8,6 +8,7 @@ from cfg_simplifier import (
     has_epsilon_productions,
     has_unit_productions,
     simplify_cfg,
+    simplify_cfg_verbose,
 )
 
 
@@ -59,6 +60,52 @@ class CFGSimplifierTests(unittest.TestCase):
         self.assertFalse(has_unit_productions(simplified))
         self.assertIn(("b",), simplified.productions["S"])
         self.assertIn(("x",), simplified.productions["S"])
+
+    def test_keep_start_epsilon_preserves_empty_word(self):
+        grammar = parse_cfg(
+            """
+            S -> A
+            A -> epsilon
+            """
+        )
+
+        simplified = simplify_cfg(grammar, keep_start_epsilon=True)
+
+        self.assertIn((), simplified.productions["S"])
+        self.assertNotIn("A", simplified.variables)
+
+    def test_pure_epsilon_grammar_becomes_empty_without_keep(self):
+        grammar = parse_cfg(
+            """
+            S -> epsilon
+            """
+        )
+
+        simplified = simplify_cfg(grammar)
+
+        self.assertEqual(simplified.productions.get("S", set()), set())
+
+    def test_unreachable_variable_removed(self):
+        grammar = parse_cfg(
+            """
+            S -> a
+            T -> b U
+            U -> c
+            """
+        )
+
+        simplified = simplify_cfg(grammar)
+
+        self.assertEqual(simplified.variables, {"S"})
+        self.assertEqual(simplified.productions["S"], {("a",)})
+
+    def test_verbose_pipeline_has_five_steps(self):
+        grammar = parse_cfg(SPECIFIED_CFG)
+        _, steps = simplify_cfg_verbose(grammar)
+
+        self.assertEqual(len(steps), 5)
+        self.assertEqual(steps[0][0], "input")
+        self.assertEqual(steps[-1][0], "(4) remove unreachable symbols")
 
 
 if __name__ == "__main__":
