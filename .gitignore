@@ -7,3 +7,6 @@ submission_staging/
 submission_package/
 ~$*.docx
 .claude/
+*.zip
+docs/report.docx
+docs/demo.mp4

@@ -1,10 +1,11 @@
 # Package experiment submission archive (v4 naming).
-# Usage: .\scripts\package_submission.ps1 -GroupNumber "7"
+# Usage: .\scripts\package_submission.ps1 -GroupNumber "7" [-SourceVideo "docs\demo.mp4"]
 param(
     [Parameter(Mandatory = $true)]
     [string]$GroupNumber,
     [string]$ClassName = "2024211301",
-    [string]$LeaderName = "ZhangHengji"
+    [string]$LeaderName = "ZhangHengji",
+    [string]$SourceVideo = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,7 +33,7 @@ $videoSuffix = [char]0x89C6 + [char]0x9891
 $reportDocx = Join-Path $staging ($baseName + "+" + $reportSuffix + ".docx")
 $codeDir = Join-Path $staging ($baseName + "+" + $codeSuffix)
 $programDir = Join-Path $staging ($baseName + "+" + $programSuffix)
-$videoPath = Join-Path $staging ($baseName + "+" + $videoSuffix + ".mp4")
+$destVideoPath = Join-Path $staging ($baseName + "+" + $videoSuffix + ".mp4")
 
 Write-Host "Converting report.md to docx..."
 $convertScript = Join-Path $root "scripts\md_to_docx.py"
@@ -53,30 +54,48 @@ Get-ChildItem $root | Where-Object {
     Copy-Item $_.FullName -Destination $codeDir -Recurse -Force
 }
 
+Get-ChildItem $codeDir -Recurse -Directory -Filter __pycache__ -ErrorAction SilentlyContinue |
+    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem $codeDir -Recurse -Filter "*.pyc" -ErrorAction SilentlyContinue |
+    Remove-Item -Force -ErrorAction SilentlyContinue
+
 Write-Host "Copying executable..."
 New-Item -ItemType Directory -Path $programDir | Out-Null
 $exe = Join-Path $root "dist\formal_lang_lab2.exe"
 if (-not (Test-Path $exe)) {
     throw "Missing executable. Run: pyinstaller --onefile --name formal_lang_lab2 main.py"
 }
-Copy-Item $exe -Destination $programDir
+Copy-Item $exe -Destination (Join-Path $programDir "formal_lang_lab2.exe") -Force
 
-$videoCandidates = @(
+$videoCandidates = @()
+if ($SourceVideo) {
+    $videoCandidates += (Resolve-Path $SourceVideo -ErrorAction Stop).Path
+}
+$videoCandidates += @(
     (Join-Path $root "docs\demo.mp4"),
-    (Join-Path $root "docs\video.mp4")
+    (Join-Path $root "docs\video.mp4"),
+    (Join-Path $root ("docs\" + $baseName + "+" + $videoSuffix + ".mp4"))
 )
-$foundVideo = $videoCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+$foundVideo = $videoCandidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 if ($foundVideo) {
-    Copy-Item $foundVideo -Destination $videoPath
+    if ((Get-Item $foundVideo).Length -eq 0) {
+        throw "Video file is empty ($foundVideo). Record a real demo to docs\demo.mp4 first."
+    }
+    Copy-Item $foundVideo -Destination $destVideoPath
 } else {
-    throw "Video not found. Place demo video at docs\demo.mp4 before packaging."
+    throw "Video not found. Place demo video at docs\demo.mp4 or pass -SourceVideo."
 }
 
 $zipPrefix = [char]0x5B9E + [char]0x9A8C + [char]0x4E8C
 $zipName = $zipPrefix + "+" + $baseName + ".zip"
 $zipPath = Join-Path $root $zipName
-if (Test-Path $zipPath) {
-    Remove-Item $zipPath -Force
+$zipPathNoExt = $zipPath.Substring(0, $zipPath.Length - 4)
+foreach ($old in @($zipPath, $zipPathNoExt)) {
+    if (Test-Path $old) {
+        Remove-Item $old -Recurse -Force
+    }
 }
-Compress-Archive -Path (Join-Path $staging "*") -DestinationPath $zipPath -Force
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::CreateFromDirectory($staging, $zipPath)
+Remove-Item $staging -Recurse -Force
 Write-Host "Created $zipPath"
