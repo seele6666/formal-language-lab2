@@ -55,6 +55,20 @@ class PDA:
     def accepts_by_empty_stack(self) -> bool:
         return not self.final_states
 
+    def copy(self) -> "PDA":
+        return PDA(
+            states=set(self.states),
+            input_symbols=set(self.input_symbols),
+            stack_symbols=set(self.stack_symbols),
+            initial_state=self.initial_state,
+            initial_stack_symbol=self.initial_stack_symbol,
+            final_states=set(self.final_states),
+            transitions={
+                key: {PDAAction(action.next_state, action.push) for action in actions}
+                for key, actions in self.transitions.items()
+            },
+        )
+
     def ordered_states(self) -> list[State]:
         return sorted(self.states)
 
