@@ -1,52 +1,60 @@
-# 实验二提交打包说明
+# 实验二提交打包说明（v4 对齐）
 
-## 已完成项
+对照：`docs/形式语言与自动机课程实验（二）v4.docx`  
+符合性检查：`docs/v4-要求对照.md`
 
-- `docs/report.md` 第 6 节运行输出与截图已填充
-- `dist/formal_lang_lab2.exe` 已通过 `demo` 命令验证
-- `docs/实验报告.typ`：Typst 排版（参照本组 DataLink / NFA 实验报告风格），编译得 `docs/实验报告.pdf`
-- `docs/report.docx` 可由 `scripts/md_to_docx.py` 从 `report.md` 重新生成
+## v4 提交清单
 
-## 待你本地完成
+| 材料 | v4 要求 | 本地路径 | 状态 |
+|---|---|---|---|
+| 实验报告 | 必交 | `docs/report.docx` / `docs/实验报告.pdf` | ✓ 已生成 |
+| 源代码 | 必交 | 项目根目录 | ✓ |
+| 可执行程序 | 必交 | `dist/formal_lang_lab2.exe` | ✓ |
+| 演示视频 | 必交，≤100MB | `docs/demo.mp4` | ⚠ 待录制 |
 
-### 1. 录制演示视频（任务 3）
+## v4 文件命名
 
-按 `docs/video_script.md` 使用 OBS 录制 720p，时长约 4 分钟，文件控制在 100MB 以内。
+示例（v4.docx）：`1组+301+张三+报告.docx`，压缩包 `实验二+1组+301+张三.zip`
 
-建议保存为：
+本组（班级 2024211301，组长 张恒基）：
 
 ```text
-docs/demo.mp4
+{组号}组+2024211301+张恒基+报告.docx
+{组号}组+2024211301+张恒基+代码/
+{组号}组+2024211301+张恒基+程序/formal_lang_lab2.exe
+{组号}组+2024211301+张恒基+视频.mp4
+
+实验二+{组号}组+2024211301+张恒基.zip
 ```
 
-### 2. 填写组号并打包（任务 4）
+## 打包命令
 
-报告中未填写**组号**。确认组号后，在项目根目录执行：
+1. 填写 report.md / 实验报告.typ 中的 **组号**
+2. 录制视频至 `docs/demo.mp4`（见 `docs/视频录制指南.md`）
+3. 执行：
 
 ```powershell
 .\scripts\package_submission.ps1 -GroupNumber "你的组号"
 ```
 
-将生成：
-
-```text
-实验二{组号}2024211301张恒基.zip
-```
-
-压缩包内含：
-
-- `{组号}2024211301张恒基报告.docx`
-- `{组号}2024211301张恒基代码/`
-- `{组号}2024211301张恒基程序/formal_lang_lab2.exe`
-- `{组号}2024211301张恒基视频.mp4`
-
-## 常用命令
+## 提交前自检（v4 验证命令）
 
 ```cmd
-cd docs
-typst compile 实验报告.typ 实验报告.pdf
-py ..\scripts\capture_terminal_screenshots.py
-py ..\scripts\md_to_docx.py report.md report.docx
-pyinstaller --onefile --name formal_lang_lab2 main.py
-dist\formal_lang_lab2.exe demo
+py main.py simplify examples\grammar_sample.txt
+py main.py pda2cfg examples\pda_sample.txt
+py main.py pda2cfg examples\pda_sample.txt --simplify
+py -m unittest discover -s tests
+py main.py demo
 ```
+
+## 重新生成报告
+
+```cmd
+py scripts\md_to_docx.py docs\report.md docs\report.docx
+cd docs && typst compile 实验报告.typ 实验报告.pdf
+py scripts\capture_terminal_screenshots.py
+```
+
+## 截止日期
+
+v4 要求：**6 月 2 日前** 以组为单位提交到云平台。

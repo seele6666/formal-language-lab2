@@ -15,10 +15,18 @@
 
 ```cmd
 py main.py simplify examples\grammar_sample.txt
+py main.py simplify examples\grammar_sample.txt --verbose
 py main.py pda2cfg examples\pda_sample.txt
 py main.py pda2cfg examples\pda_sample.txt --simplify
 py -m unittest discover -s tests
 ```
+
+可选参数：
+
+- `--verbose`：打印化简流水线每一步中间文法
+- `--keep-start-epsilon`：开始符号 nullable 时保留 `S -> epsilon`
+- `--format text|json|latex`：输出格式（默认 text）
+- `--no-auto-convert`：不将终态 PDA 自动转为空栈 PDA
 
 兼容命令：
 
@@ -66,6 +74,8 @@ q1,eps,z0 -> q1,eps
 - `pda.py`：PDA 数据结构。
 - `pda_parser.py`：PDA 文本解析。
 - `pda_to_cfg.py`：PDA 到 CFG 的构造算法。
+- `pda_convert.py`：终态 PDA 转空栈 PDA。
+- `cfg_format.py`：JSON / LaTeX 输出。
 - `main.py`：命令行入口。
-- `tests/`：单元测试。
+- `tests/`：单元测试（24 项）。
 - `examples/`：实验指定样例输入。
