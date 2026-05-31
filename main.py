@@ -7,8 +7,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from cfg_format import to_json, to_latex
 from cfg_parser import parse_cfg
-from cfg_simplifier import simplify_cfg
+from cfg_simplifier import simplify_cfg, simplify_cfg_verbose
 from pda_parser import parse_pda
 from pda_to_cfg import pda_to_cfg
 
@@ -51,6 +52,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="simplify a CFG",
     )
     cfg_parser.add_argument("file", nargs="?", default="-", help="CFG input file, or stdin")
+    _add_output_options(cfg_parser)
     cfg_parser.set_defaults(handler=_handle_simplify_cfg)
 
     pda_parser = subparsers.add_parser(
@@ -61,6 +63,12 @@ def _build_parser() -> argparse.ArgumentParser:
     pda_parser.add_argument("file", nargs="?", default="-", help="PDA input file, or stdin")
     pda_parser.add_argument("--simplify", action="store_true", help="print the simplified CFG")
     pda_parser.add_argument("--show-raw", action="store_true", help="also print the raw CFG")
+    pda_parser.add_argument(
+        "--no-auto-convert",
+        action="store_true",
+        help="do not convert final-state PDAs to empty-stack form",
+    )
+    _add_output_options(pda_parser)
     pda_parser.set_defaults(handler=_handle_pda_to_cfg)
 
     demo_parser = subparsers.add_parser("demo", help="run the two specified examples")
@@ -68,26 +76,67 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _add_output_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="print each simplification step before the final output",
+    )
+    parser.add_argument(
+        "--keep-start-epsilon",
+        action="store_true",
+        help="preserve S -> epsilon when the start symbol is nullable",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["text", "json", "latex"],
+        default="text",
+        help="output format for grammar results (default: text)",
+    )
+
+
 def _handle_simplify_cfg(args: argparse.Namespace) -> None:
     grammar = parse_cfg(_read_input(args.file))
-    simplified = simplify_cfg(grammar)
-    print(simplified.to_text())
+    if args.verbose:
+        simplified, steps = simplify_cfg_verbose(
+            grammar,
+            keep_start_epsilon=args.keep_start_epsilon,
+        )
+        _print_verbose_steps(steps, args.format)
+        print("=== final ===")
+        _print_cfg(simplified, args.format)
+        return
+    simplified = simplify_cfg(grammar, keep_start_epsilon=args.keep_start_epsilon)
+    _print_cfg(simplified, args.format)
 
 
 def _handle_pda_to_cfg(args: argparse.Namespace) -> None:
     pda = parse_pda(_read_input(args.file))
-    raw_cfg = pda_to_cfg(pda)
+    raw_cfg = pda_to_cfg(pda, auto_convert=not args.no_auto_convert)
     if args.simplify:
-        simplified = simplify_cfg(raw_cfg)
+        if args.verbose:
+            simplified, steps = simplify_cfg_verbose(
+                raw_cfg,
+                keep_start_epsilon=args.keep_start_epsilon,
+            )
+            if args.show_raw:
+                print("Raw CFG:")
+                _print_cfg(raw_cfg, args.format)
+                print()
+            _print_verbose_steps(steps, args.format)
+            print("=== final ===")
+            _print_cfg(simplified, args.format)
+            return
+        simplified = simplify_cfg(raw_cfg, keep_start_epsilon=args.keep_start_epsilon)
         if args.show_raw:
             print("Raw CFG:")
-            print(raw_cfg.to_text())
+            _print_cfg(raw_cfg, args.format)
             print()
         print("Simplified CFG:")
-        print(simplified.to_text())
+        _print_cfg(simplified, args.format)
     else:
         print("Raw CFG:")
-        print(raw_cfg.to_text())
+        _print_cfg(raw_cfg, args.format)
 
 
 def _handle_demo(args: argparse.Namespace) -> None:
@@ -96,6 +145,23 @@ def _handle_demo(args: argparse.Namespace) -> None:
     print()
     print("Specified PDA converted and simplified:")
     print(simplify_cfg(pda_to_cfg(parse_pda(SPECIFIED_PDA))).to_text())
+
+
+def _print_verbose_steps(steps: list[tuple[str, object]], output_format: str) -> None:
+    for label, grammar in steps:
+        print(f"=== {label} ===")
+        _print_cfg(grammar, output_format)
+        print()
+
+
+def _print_cfg(grammar: object, output_format: str) -> None:
+    if output_format == "json":
+        print(to_json(grammar))
+        return
+    if output_format == "latex":
+        print(to_latex(grammar))
+        return
+    print(grammar.to_text())
 
 
 def _read_input(file_name: str) -> str:
