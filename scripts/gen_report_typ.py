@@ -1,4 +1,10 @@
-// 形式语言与自动机实验（二）· CFG 化简与 PDA 转 CFG
+"""Generate docs/实验报告.typ per cursor-tasks.md structure."""
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "docs" / "实验报告.typ"
+
+COVER = r'''// 形式语言与自动机实验（二）· CFG 化简与 PDA 转 CFG
 // 编译: typst compile docs/实验报告.typ docs/实验报告.pdf
 
 #import "typst-preamble.typ": *
@@ -82,7 +88,9 @@
 ]
 
 #body-start()
+'''
 
+BODY = r'''
 = 1 小组信息与实验环境 <sec:env>
 
 *组号*：7 组。*班级*：2024211301。*组长*：张恒基（2024210926）。
@@ -552,24 +560,7 @@
   ```,
 )
 
-*分析*：语言 $L={b^m a^n bar m,n >= 1, n <= m}$（非 $b^n a^n$）。
-
-*产生式含义*：
-
-#hdr-table[
-  #table(
-    columns: (auto, 1fr),
-    align: (left, left),
-    table.header([*产生式*], [*对应迁移直觉*]),
-    [#inline-code("S -> b [q0,B,q1]")], [读 b；#inline-code("[q0,B,q1]") 表示在 $q_0$ 栈顶为 $B$ 时读入符号并弹出 $B$ 到达 $q_1$（与栈顶 $B$ 相关，非 $z_0$）],
-    [#inline-code("[q0,B,q1] -> a")], [$delta(q_0,a,B)=(q_1,epsilon)$],
-    [#inline-code("[q0,B,q1] -> b [q0,B,q1]")], [$delta(q_0,b,B)=(q_0,B B)$，中间状态 $r=q_1$],
-    [#inline-code("[q0,B,q1] -> b [q0,B,q1] [q1,B,q1]")], [同上，$r=q_0$ 形成递归],
-    [#inline-code("[q1,B,q1] -> a")], [$delta(q_1,a,B)=(q_1,epsilon)$],
-  )
-]
-
-*语义验证*（BFS 枚举短串）：可生成 #inline-code("ba")、#inline-code("bba")、#inline-code("bbaa")、#inline-code("bbbaaa")；不可生成 #inline-code("baa")、空串、单独 #inline-code("b")/#inline-code("a")。
+*分析*：语言 $L={b^m a^n bar m,n >= 1, n <= m}$（非 $b^n a^n$）。BFS 可生成 #inline-code("ba")、#inline-code("bbbaaa")；不可生成 #inline-code("baa")。
 
 #figure(
   image("screenshots/6-2-pda2cfg-simplify.png", width: 100%),
@@ -803,3 +794,13 @@
   ```,
   title: [#inline-code("cfg_simplifier.py") / #inline-code("pda_to_cfg.py") / #inline-code("main.py") 入口摘要],
 )
+'''
+
+def main() -> None:
+    content = COVER + BODY
+    OUT.write_text(content, encoding="utf-8")
+    lines = content.count("\n") + 1
+    print(f"Wrote {OUT} ({lines} lines)")
+
+if __name__ == "__main__":
+    main()

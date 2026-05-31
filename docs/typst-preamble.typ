@@ -133,6 +133,40 @@
   body
 }
 
+#let def-counter = counter("definition")
+#let thm-counter = counter("theorem")
+#let alg-counter = counter("algorithm")
+
+#let definition(title, body) = {
+  def-counter.step()
+  figure(
+    kind: "definition",
+    supplement: [定义],
+    caption: context [#def-counter.display(). #title],
+    body,
+  )
+}
+
+#let theorem(title, body) = {
+  thm-counter.step()
+  figure(
+    kind: "theorem",
+    supplement: [定理],
+    caption: context [#thm-counter.display(). #title],
+    body,
+  )
+}
+
+#let algorithm(title, body) = {
+  alg-counter.step()
+  figure(
+    kind: "algorithm",
+    supplement: [算法],
+    caption: context [#alg-counter.display(). #title],
+    body,
+  )
+}
+
 #let body-start() = {
   pagebreak()
   set page(numbering: none, footer: none)
