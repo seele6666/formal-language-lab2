@@ -24,6 +24,22 @@ SHOTS = [
         "6-3-unittest.png",
         [sys.executable, "-m", "unittest", "discover", "-s", "tests"],
     ),
+    (
+        "6-4-epsilon.png",
+        ["py", "main.py", "simplify", r"examples\case_epsilon.txt"],
+    ),
+    (
+        "6-5-unit-cycle.png",
+        ["py", "main.py", "simplify", r"examples\case_unit_cycle.txt"],
+    ),
+    (
+        "6-6-unreachable.png",
+        ["py", "main.py", "simplify", r"examples\case_unreachable.txt"],
+    ),
+    (
+        "6-7-push3.png",
+        ["py", "main.py", "pda2cfg", r"examples\case_push3.txt"],
+    ),
 ]
 
 BG = (12, 12, 12)
