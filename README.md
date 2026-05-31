@@ -79,3 +79,14 @@ q1,eps,z0 -> q1,eps
 - `main.py`：命令行入口。
 - `tests/`：单元测试（24 项）。
 - `examples/`：实验指定样例输入。
+- `scripts/rebuild_submission.ps1`：一键测试、报告、截图、打包。
+
+## 提交打包（7 组）
+
+将演示视频放到 `docs/demo.mp4` 后执行：
+
+```powershell
+.\scripts\rebuild_submission.ps1 -GroupNumber "7"
+```
+
+详见 `docs/SUBMISSION.md`。
