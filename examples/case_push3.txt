@@ -1,0 +1,2 @@
+M = ({p,q}, {a}, {A,B,C,D}, delta, p, A, empty)
+delta(p,a,A) = {(q,BCD)}
