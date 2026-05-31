@@ -7,22 +7,29 @@ from typing import Optional
 
 from cfg import CFG
 from pda import PDA, PDAAction
+from pda_convert import convert_final_to_empty_stack
 
 
 START_SYMBOL = "S"
 
 
-def pda_to_cfg(pda: PDA) -> CFG:
+def pda_to_cfg(pda: PDA, *, auto_convert: bool = True) -> CFG:
     """Convert an empty-stack PDA to an equivalent CFG.
 
     The variable [p,A,q] generates exactly the strings that move the PDA from
     state p with A on top of the stack to state q after A has been removed.
     Push strings of length 0, 1, 2, and larger finite lengths are handled by
     enumerating the intermediate states between the pushed stack symbols.
+
+    When ``auto_convert`` is true, final-state PDAs are converted to empty-stack
+    form before construction.
     """
 
     if not pda.accepts_by_empty_stack:
-        raise NotImplementedError("Only empty-stack PDA acceptance is supported.")
+        if auto_convert:
+            pda = convert_final_to_empty_stack(pda)
+        else:
+            raise NotImplementedError("Only empty-stack PDA acceptance is supported.")
 
     states = pda.ordered_states()
     stack_symbols = pda.ordered_stack_symbols()

@@ -85,6 +85,20 @@ class PDAToCFGTests(unittest.TestCase):
             any(len(rhs) == 4 and rhs[0] == "a" for rhs in grammar.productions[variable_name("p", "D", "q")])
         )
 
+    def test_push_length_three_generates_long_rhs(self):
+        pda = parse_pda(
+            """
+            M = ({p,q}, {a}, {A,B,C,D}, delta, p, A, empty)
+            delta(p,a,A) = {(q,BCD)}
+            """
+        )
+
+        grammar = pda_to_cfg(pda)
+
+        self.assertTrue(
+            any(len(rhs) == 4 and rhs[0] == "a" for rhs in grammar.productions[variable_name("p", "A", "q")])
+        )
+
 
 def _generate_terminal_strings(grammar, max_len: int, max_steps: int) -> set[str]:
     results: set[str] = set()
